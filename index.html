@@ -13,13 +13,22 @@
       section {
         flex: 1;
       }
+      .selected {
+        background-color: olive;
+      }
+      .selected a {
+        color: cornSilk;
+      }
+      #restaurants-list {
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
     <h1>Acme Reservation Planner JS</h1>
     <main>
       <section>
-        <h2>Users</h2>
+        <h2><a href='#'>Users</a></h2>
         <ul id='users-list'>
         </ul>
       </section>

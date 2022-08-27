@@ -2,7 +2,7 @@ const { fetchJSON } = require('./apiHelpers');
 
 let restaurants;
 let users;
-let reservations = [];
+let reservations;
 
 const usersList = document.querySelector('#users-list');
 
@@ -28,7 +28,9 @@ const renderReservations = ()=> {
     const restaurant = restaurants.find( restaurant => restaurant.id === reservation.restaurantId);
     return `
       <li>
+        ${ new Date(reservation.updatedAt).toLocaleString() }
         ${ restaurant.name }
+        <button data-id='${ reservation.id }'>x</button>
       </li>
     `;
   }).join('');
@@ -39,7 +41,7 @@ const renderRestaurants = ()=> {
   const html = restaurants.map( restaurant => {
     const count = (reservations || []).filter(reservation=> reservation.restaurantId === restaurant.id).length;
     return `
-      <li data-id='${ restaurant.id }'>
+      <li data-id='${ restaurant.id }' ${ count ? 'class=has-reservation': ''}>
         ${ restaurant.name } (${ count })
       </li>
     `;
@@ -48,17 +50,22 @@ const renderRestaurants = ()=> {
 };
 
 const setup = async()=> {
-  users = await fetchJSON('/api/users'); 
-  renderUsers();
+  if(!users){
+    users = await fetchJSON('/api/users'); 
+  }
+  if(!restaurants){
+    restaurants = await fetchJSON('/api/restaurants');
+  }
 
   const id = window.location.hash.slice(1);
   if(id){
     reservations = await fetchJSON(`/api/users/${id}/reservations`);
   }
+  else {
+    reservations = [];
+  }
 
-  
-
-  restaurants = await fetchJSON('/api/restaurants');
+  renderUsers();
   renderReservations();
   renderRestaurants();
 };
@@ -87,15 +94,17 @@ restaurantsList.addEventListener('click', async(ev)=> {
   }
 });
 
-window.addEventListener('hashchange', async()=> {
-  renderUsers();
-  const id = window.location.hash.slice(1);
-  if(id){
-    reservations = await fetchJSON(`/api/users/${id}/reservations`); 
+reservationsList.addEventListener('click', async(ev)=> {
+  const target = ev.target;
+  if(target.tagName === 'BUTTON'){
+    const id = target.getAttribute('data-id')*1;
+    await fetch(`/api/reservations/${id}`, {
+      method: 'DELETE'
+    });
+    reservations = reservations.filter(reservation => reservation.id !== id);
+    renderReservations();
+    renderRestaurants();
   }
-  else {
-    reservations = [];
-  }
-  renderRestaurants();
-  renderReservations();
 });
+
+window.addEventListener('hashchange', setup);
